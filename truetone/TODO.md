@@ -1,0 +1,1 @@
+- Train LightGBM prosody model once real/bootstrap labeled audio set is available; swap into ProsodyDetector.score() without touching fusion.py.

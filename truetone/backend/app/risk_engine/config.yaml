@@ -1,0 +1,17 @@
+weights:
+  tier1: {aasist: 0.60, prosody: 0.25, speaker: 0.15}
+  tier2: {aasist: 0.75, prosody: 0.25}
+temporal_aggregation:
+  current_weight: 0.50
+  recent_weight: 0.30
+  history_weight: 0.20
+  recent_window_count: 4
+  history_window_count: 12
+thresholds:
+  low_max: 0.39
+  medium_max: 0.69
+hysteresis:
+  escalate_margin: 0.03
+  deescalate_margin: 0.03
+  min_consecutive_high_for_alert: 3
+  cooldown_seconds: 20
