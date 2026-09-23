@@ -1,0 +1,59 @@
+{
+  "tamil": {
+    "train": {
+      "rows": 888,
+      "real": 443,
+      "synthetic": 445,
+      "groups": 1
+    },
+    "val": {
+      "rows": 0,
+      "real": 0,
+      "synthetic": 0,
+      "groups": 0
+    },
+    "test": {
+      "rows": 0,
+      "real": 0,
+      "synthetic": 0,
+      "groups": 0
+    }
+  },
+  "hindi": {
+    "train": {
+      "rows": 1000,
+      "real": 500,
+      "synthetic": 500,
+      "groups": 1
+    },
+    "val": {
+      "rows": 0,
+      "real": 0,
+      "synthetic": 0,
+      "groups": 0
+    },
+    "test": {
+      "rows": 309,
+      "real": 149,
+      "synthetic": 160,
+      "groups": 1
+    }
+  },
+  "multilingual_replay": {
+    "train": {
+      "rows": 2000,
+      "real": 1000,
+      "synthetic": 1000,
+      "groups": 223
+    }
+  },
+  "limitations": [
+    "Tamil has exactly 1 group (TAM_F), so it cannot be split. 100% went to TRAIN.",
+    "Hindi has exactly 2 groups (hi_f, hi_m). One went to TRAIN and one to TEST. Validation is empty."
+  ],
+  "leakage_checks": {
+    "tamil_train_val_test_overlap": 0,
+    "hindi_train_val_test_overlap": 0,
+    "hindi_test_in_train": 0
+  }
+}

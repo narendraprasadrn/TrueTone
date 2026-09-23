@@ -57,8 +57,10 @@ async def run_demo_calls(demo_mode: str = "tier1"):
                 
                 try:
                     processed = preprocess_for_detection(audio, sr, debug=False)
-                    a_score = aasist.score(processed, 16000)
-                    p_score = prosody.score(processed, 16000)
+                    aasist_res = aasist.predict_aasist(processed, 16000)
+                    a_score = aasist_res["spoof_score"]
+                    p_res = prosody.score(processed, 16000)
+                    p_score = p_res["spoof_score"]
                     s_score = sv.score(processed, "user_demo") if tier == "tier1" else None
                     
                     ctx_flags = evaluate_context_stubs(

@@ -25,12 +25,14 @@ async def live_mic_endpoint(websocket: WebSocket, enrolled_identity_id: str = No
     
     call_id = f"live_{id(websocket)}"
     
-    
     SR = 16000
-    WINDOW_SEC = 2.0
     STEP_SEC = 1.0
-    WINDOW_SAMPLES = int(WINDOW_SEC * SR)
+    AASIST_SEC = 64600 / 16000 # 4.0375
+    OTHER_SEC = 2.0
+    
     STEP_SAMPLES = int(STEP_SEC * SR)
+    AASIST_SAMPLES = 64600
+    OTHER_SAMPLES = int(OTHER_SEC * SR)
     
     audio_buffer = np.array([], dtype=np.float32)
     window_index = 0
@@ -44,50 +46,35 @@ async def live_mic_endpoint(websocket: WebSocket, enrolled_identity_id: str = No
                 
             try:
                 data = await asyncio.wait_for(websocket.receive_bytes(), timeout=5.0)
-                print(f"[LIVE-MIC DEBUG] received message: type={type(data)}, size={len(data) if data else 0} bytes")
             except asyncio.TimeoutError:
                 continue
                 
             chunk = np.frombuffer(data, dtype=np.float32)
             audio_buffer = np.concatenate((audio_buffer, chunk))
             
-            while len(audio_buffer) >= WINDOW_SAMPLES:
-                window_chunk = audio_buffer[:WINDOW_SAMPLES]
+            # Fire when we have at least OTHER_SAMPLES (2.0s)
+            while len(audio_buffer) >= OTHER_SAMPLES:
+                # Grab up to AASIST_SAMPLES (4.04s) from history
+                aasist_chunk = audio_buffer[-AASIST_SAMPLES:] if len(audio_buffer) > AASIST_SAMPLES else audio_buffer
+                # Grab up to OTHER_SAMPLES (2.0s) from history
+                other_chunk = audio_buffer[-OTHER_SAMPLES:]
                 
-                rms = float(np.sqrt(np.mean(window_chunk**2))) if len(window_chunk) > 0 else 0.0
-                
-                # Diagnostics for Step 1
-                try:
-                    print(f"[DEBUG LIVE-MIC] Window {window_index}: chunk_size={len(data)} bytes, "
-                          f"samples={len(window_chunk)}, duration={len(window_chunk)/SR:.2f}s, dtype={window_chunk.dtype}, "
-                          f"min={float(np.min(window_chunk)):.6f}, max={float(np.max(window_chunk)):.6f}, "
-                          f"mean={float(np.mean(window_chunk)):.6f}, RMS={rms:.6f}")
-                except Exception as e:
-                    pass
-
-                # If the window is basically silence/room noise (e.g. peak < 0.01 = -40dBFS), bypass models
-                max_val = float(np.abs(window_chunk).max()) if len(window_chunk) > 0 else 0.0
+                max_val = float(np.abs(other_chunk).max()) if len(other_chunk) > 0 else 0.0
                 if max_val < 0.01:
-                    print(f"[DEBUG LIVE-MIC] Window {window_index}: Signal too quiet (max_val={max_val:.4f}). Returning 0.0")
                     a_score = 0.0
                     p_score = 0.0
                     s_score = None
                 else:
-                    rms_raw = float(np.sqrt(np.mean(window_chunk**2))) if len(window_chunk) > 0 else 0.0
-                    print(f"[LIVE-MIC DEBUG] raw buffer RMS: {rms_raw:.6f}")
+                    aasist_processed_raw = preprocess_for_detection(aasist_chunk, SR, debug=False)
+                    from app.preprocessing.pipeline import prepare_aasist_context
+                    aasist_processed = prepare_aasist_context(aasist_processed_raw)
+                    other_processed = preprocess_for_detection(other_chunk, SR, debug=False)
                     
-                    processed = preprocess_for_detection(window_chunk, SR, debug=True)
-                    
-                    rms_trimmed = float(np.sqrt(np.mean(processed**2))) if len(processed) > 0 else 0.0
-                    print(f"[LIVE-MIC DEBUG] post-VAD sample count: {len(processed)} (was {len(window_chunk)} before VAD)")
-                    print(f"[LIVE-MIC DEBUG] post-VAD RMS: {rms_trimmed:.6f}")
-                    
-                    if len(processed) == 0:
-                        print(f"[WARNING] Window {window_index}: processed audio is EMPTY!")
-                    
-                    a_score = aasist.score(processed, 16000)
-                    p_score = prosody.score(processed, 16000)
-                    s_score = sv.score(processed, enrolled_identity_id) if enrolled_identity_id else None
+                    aasist_res = aasist.predict_aasist(aasist_processed, 16000)
+                    a_score = aasist_res["spoof_score"]
+                    p_res = prosody.score(other_processed, 16000)
+                    p_score = p_res["spoof_score"]
+                    s_score = sv.score(other_processed, enrolled_identity_id) if enrolled_identity_id else None
                 
                 ctx_flags = {"unknown_caller": False, "high_value_keywords": False, "ivr_allowlisted": False}
                 win_res = re.score_window(call_id, a_score, p_score, s_score, ctx_flags)
@@ -104,6 +91,10 @@ async def live_mic_endpoint(websocket: WebSocket, enrolled_identity_id: str = No
                 })
                 
                 window_index += 1
+                
+                # We consume STEP_SAMPLES from the start of the buffer
+                # But wait, we want to maintain history for the NEXT window!
+                # If we chop STEP_SAMPLES, we keep the overlapping part for the next loop
                 audio_buffer = audio_buffer[STEP_SAMPLES:]
                 
     except WebSocketDisconnect:

@@ -1,0 +1,66 @@
+{
+  "train": {
+    "total": 16012,
+    "real": 8026,
+    "synth": 7986,
+    "languages": [
+      "Assamese",
+      "Bengali",
+      "Bodo",
+      "Dogri",
+      "Kannada",
+      "Malayalam",
+      "Marathi",
+      "Sanskrit",
+      "Nepali",
+      "English",
+      "Telugu",
+      "Hindi",
+      "Odia",
+      "Manipuri",
+      "Gujarati",
+      "Tamil"
+    ],
+    "unique_groups": 1311
+  },
+  "val": {
+    "total": 4259,
+    "real": 2137,
+    "synth": 2122,
+    "languages": [
+      "Assamese",
+      "Bengali",
+      "Bodo",
+      "Kannada",
+      "Malayalam",
+      "Marathi",
+      "English",
+      "Telugu",
+      "Hindi",
+      "Odia",
+      "Manipuri",
+      "Gujarati"
+    ],
+    "unique_groups": 174
+  },
+  "test": {
+    "total": 168,
+    "real": 87,
+    "synth": 81,
+    "languages": [
+      "Odia"
+    ],
+    "unique_groups": 168
+  },
+  "total_rows": 20439,
+  "group_overlap": {
+    "train_val": 0,
+    "train_test": 0,
+    "val_test": 0
+  },
+  "id_overlap": {
+    "train_val": 0,
+    "train_test": 0,
+    "val_test": 0
+  }
+}

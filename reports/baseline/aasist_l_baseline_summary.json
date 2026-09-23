@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-09-23T19:22:29.637864",
+  "checkpoint": "/run/media/narendraprasad/D/Eternal-V/truetone/backend/third_party/aasist/models/weights/AASIST-L.pth",
+  "preprocessing": "Mono, 16kHz, EXACTLY 64600 samples (center crop / center pad)",
+  "threshold": 0.5,
+  "split_manifest_sha256": "5708659dc2f872539f3dac767505b4dafbb847107ea66d58c57f27db7682c4dc",
+  "processed_samples": 4259,
+  "missing_samples": 0,
+  "failed_samples": 0,
+  "overall_metrics": {
+    "accuracy": 0.41887767081474525,
+    "precision": 0.4353242946134115,
+    "recall": 0.5598491988689915,
+    "f1": 0.4897959183673469,
+    "roc_auc": 0.38324214051867433,
+    "eer": 0.5999064108563407,
+    "fpr": 0.7211043518951802,
+    "fnr": 0.44015080113100846
+  }
+}

@@ -1,63 +1,56 @@
-import librosa
 import numpy as np
+import librosa
 
-def preprocess_for_detection(raw_audio: np.ndarray, source_sr: int, debug: bool = True) -> np.ndarray:
+def preprocess_for_detection(raw_audio: np.ndarray, source_sr: int, debug: bool = False) -> np.ndarray:
     """
-    Single source of truth for the full 7-stage preprocessing pipeline.
-    Used identically by CallSimulator, Test Bench, and Live Mic.
-    
-    Stages:
-    1. Audio Capture/Decode (Assumed done before passing to this function)
-    2. Channel Handling (force mono)
-    3. Resample to 16kHz
-    4. Amplitude Normalization
-    5. VAD (Voice Activity Detection / noise gating)
-    6. Noise/Quality Handling
-    7. Sliding Window/Chunking (Assumed handled by caller, this processes one chunk)
+    Unifies audio preprocessing.
+    - convert to mono
+    - resample to 16000
+    - cast to float32
+    - reject NaN/Inf
+    - remove DC offset
+    - NO aggressive denoise, NO arbitrary min/max normalization
     """
-    audio_data = raw_audio
+    audio = raw_audio
     
-    if debug:
-        print(f"[PREPROCESS DEBUG] 1. Input: samples={len(audio_data)}, sr={source_sr}")
+    # 1. Reject NaN/Inf
+    if not np.isfinite(audio).all():
+        audio = np.nan_to_num(audio)
         
-    # 2. Channel Handling (force mono)
-    if len(audio_data.shape) > 1:
-        # Check if shape is (channels, samples) or (samples, channels)
-        # librosa expects (channels, samples)
-        if audio_data.shape[1] < audio_data.shape[0] and audio_data.shape[1] <= 2:
-             audio_data = audio_data.T
-        audio_data = librosa.to_mono(audio_data)
-        if debug:
-            print(f"[PREPROCESS DEBUG] 2. Forced mono: samples={len(audio_data)}")
-            
-    # 3. Resample to 16kHz
-    target_sr = 16000
-    if source_sr != target_sr:
-        audio_data = librosa.resample(y=audio_data, orig_sr=source_sr, target_sr=target_sr)
-        if debug:
-            print(f"[PREPROCESS DEBUG] 3. Resampled to {target_sr}Hz: samples={len(audio_data)}")
-
-    # 4. Amplitude Normalization
-    max_val = np.abs(audio_data).max() if len(audio_data) > 0 else 0.0
-    if max_val > 0.01:
-        audio_data = audio_data / max_val
+    # 2. Mono
+    if audio.ndim > 1:
+        audio = librosa.to_mono(audio.T if audio.shape[1] > audio.shape[0] else audio)
+        
+    # 3. Resample
+    if source_sr != 16000:
+        audio = librosa.resample(y=audio, orig_sr=source_sr, target_sr=16000)
+        
+    # 4. Convert to float32
+    audio = audio.astype(np.float32)
+    
+    # 5. Remove DC offset
+    audio = audio - np.mean(audio)
+    
     if debug:
-        rms_norm = float(np.sqrt(np.mean(audio_data**2))) if len(audio_data) > 0 else 0.0
-        print(f"[PREPROCESS DEBUG] 4. Normalized: max={max_val:.6f}, RMS={rms_norm:.6f}")
+        print(f"[PREPROCESS DEBUG] output_samples={len(audio)}, sr=16000, rms={np.sqrt(np.mean(audio**2)):.4f}")
+        
+    return audio
 
-    # 5. VAD
-    if len(audio_data) > 0:
-        voiced_audio, _ = librosa.effects.trim(audio_data, top_db=20)
-        if len(voiced_audio) > 0:
-            audio_data = voiced_audio
-            
-    if debug:
-        rms_vad = float(np.sqrt(np.mean(audio_data**2))) if len(audio_data) > 0 else 0.0
-        print(f"[PREPROCESS DEBUG] 5. Post-VAD: samples={len(audio_data)}, RMS={rms_vad:.6f}")
-
-    # 6. Noise/Quality Handling
-    # (Placeholder for additional handling)
-    if debug:
-        print(f"[PREPROCESS DEBUG] 6. Noise Handling: passed")
-
-    return audio_data
+def prepare_aasist_context(audio_buffer: np.ndarray) -> np.ndarray:
+    """
+    Prepares a contiguous 64600-sample context for AASIST-L.
+    If the buffer is shorter than 64600 samples, it is zero-padded at the beginning (pre-padding).
+    If it is longer, the most recent 64600 samples are taken.
+    NEVER uses periodic repetition (np.tile).
+    """
+    REQUIRED_SAMPLES = 64600
+    
+    if len(audio_buffer) >= REQUIRED_SAMPLES:
+        context = audio_buffer[-REQUIRED_SAMPLES:]
+    else:
+        # Zero pad at the beginning
+        pad_width = REQUIRED_SAMPLES - len(audio_buffer)
+        context = np.pad(audio_buffer, (pad_width, 0), mode='constant', constant_values=0.0)
+        
+    assert len(context) == REQUIRED_SAMPLES, f"Context length must be exactly {REQUIRED_SAMPLES}, got {len(context)}"
+    return context

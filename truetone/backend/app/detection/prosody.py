@@ -22,8 +22,14 @@ class ProsodyDetector:
             features = features.reshape(1, -1)
             
             # Predict returns probability for binary classification
-            prob = self.model.predict(features)[0]
-            return float(prob)
+            # The model was trained with 1 = bonafide, 0 = spoof.
+            # We want to return the spoof probability, so we return 1.0 - prob
+            prob_bonafide = self.model.predict(features)[0]
+            prob_bonafide = float(np.clip(prob_bonafide, 0.0, 1.0))
+            return {
+                "bonafide_score": prob_bonafide,
+                "spoof_score": 1.0 - prob_bonafide
+            }
             
         # PLACEHOLDER — rule-based, to be replaced by trained LightGBM once a
         # labeled dataset (ASVspoof LA or bootstrap real+TTS set) is available.
@@ -61,4 +67,7 @@ class ProsodyDetector:
         if flatness < 0.001:
             anomaly_score += 0.1 * (0.001 - flatness) / 0.001
             
-        return min(1.0, float(anomaly_score))
+        return {
+            "bonafide_score": 1.0 - min(1.0, float(anomaly_score)),
+            "spoof_score": min(1.0, float(anomaly_score))
+        }

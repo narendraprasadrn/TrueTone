@@ -1,0 +1,119 @@
+{
+  "train": {
+    "total": 16017,
+    "real": 8031,
+    "synth": 7986,
+    "languages": [
+      "Assamese",
+      "Bengali",
+      "Bodo",
+      "Dogri",
+      "Kannada",
+      "Malayalam",
+      "Marathi",
+      "Sanskrit",
+      "Nepali",
+      "English",
+      "Telugu",
+      "Hindi",
+      "Odia",
+      "Manipuri",
+      "Gujarati",
+      "Tamil"
+    ],
+    "unique_groups": 1316,
+    "lang_counts": {
+      "Assamese": 1001,
+      "Bengali": 999,
+      "Bodo": 644,
+      "Dogri": 1311,
+      "English": 1000,
+      "Gujarati": 562,
+      "Hindi": 1000,
+      "Kannada": 977,
+      "Malayalam": 991,
+      "Manipuri": 963,
+      "Marathi": 645,
+      "Nepali": 1778,
+      "Odia": 1301,
+      "Sanskrit": 1312,
+      "Tamil": 888,
+      "Telugu": 645
+    }
+  },
+  "val": {
+    "total": 163,
+    "real": 82,
+    "synth": 81,
+    "languages": [
+      "Odia"
+    ],
+    "unique_groups": 163,
+    "lang_counts": {
+      "Odia": 163
+    }
+  },
+  "test": {
+    "total": 4259,
+    "real": 2137,
+    "synth": 2122,
+    "languages": [
+      "Assamese",
+      "Bengali",
+      "Bodo",
+      "Kannada",
+      "Malayalam",
+      "Marathi",
+      "English",
+      "Telugu",
+      "Hindi",
+      "Odia",
+      "Manipuri",
+      "Gujarati"
+    ],
+    "unique_groups": 174,
+    "lang_counts": {
+      "Assamese": 777,
+      "Bengali": 135,
+      "Bodo": 467,
+      "English": 132,
+      "Gujarati": 251,
+      "Hindi": 309,
+      "Kannada": 801,
+      "Malayalam": 142,
+      "Manipuri": 149,
+      "Marathi": 466,
+      "Odia": 163,
+      "Telugu": 467
+    }
+  },
+  "total_rows": 20439,
+  "langs_missing_test": [
+    [
+      "Nepali",
+      "Only 1 group available"
+    ],
+    [
+      "Sanskrit",
+      "Only 1 group available"
+    ],
+    [
+      "Dogri",
+      "Only 1 group available"
+    ],
+    [
+      "Tamil",
+      "Only 1 group available"
+    ]
+  ],
+  "group_overlap": {
+    "train_val": 0,
+    "train_test": 0,
+    "val_test": 0
+  },
+  "id_overlap": {
+    "train_val": 0,
+    "train_test": 0,
+    "val_test": 0
+  }
+}
