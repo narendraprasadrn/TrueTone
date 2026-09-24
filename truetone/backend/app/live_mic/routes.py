@@ -97,8 +97,7 @@ async def live_mic_endpoint(websocket: WebSocket, enrolled_identity_id: str = No
                         "prosody_score": 0.0,
                         "speaker_score": None,
                         "fused_score": 0.0,
-                        "classification": "no_speech",
-                        "error": "No speech detected"
+                        "classification": "no_speech"
                     })
                 else:
                     # Passed gate
