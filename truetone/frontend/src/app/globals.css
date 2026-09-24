@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+:root {
+  --tt-navy: #0B1F3A;
+  --tt-teal: #14B8A6;
+  --tt-amber: #F59E0B;
+  
+  --tt-bg: #F8FAFC;
+  --tt-surface: #FFFFFF;
+  --tt-surface-muted: #F1F5F9;
+  
+  --tt-border: #E2E8F0;
+  --tt-border-strong: #CBD5E1;
+  
+  --tt-text: #0B1F3A;
+  --tt-text-secondary: #475569;
+  --tt-text-muted: #64748B;
+
+  --tt-success-bg: #ECFDF5;
+  --tt-warning-bg: #FFFBEB;
+  
+  /* Legacy mapping for backward compatibility during transition if needed, though better to remove */
+  --background: var(--tt-bg);
+  --surface: var(--tt-surface);
+  --surface-elevated: var(--tt-surface-muted);
+  --border: var(--tt-border);
+  
+  --primary-text: var(--tt-text);
+  --secondary-text: var(--tt-text-secondary);
+  --muted-text: var(--tt-text-muted);
+}
+
+@theme inline {
+  --color-tt-navy: var(--tt-navy);
+  --color-tt-teal: var(--tt-teal);
+  --color-tt-amber: var(--tt-amber);
+  
+  --color-tt-bg: var(--tt-bg);
+  --color-tt-surface: var(--tt-surface);
+  --color-tt-surface-muted: var(--tt-surface-muted);
+  
+  --color-tt-border: var(--tt-border);
+  --color-tt-border-strong: var(--tt-border-strong);
+  
+  --color-tt-text: var(--tt-text);
+  --color-tt-text-secondary: var(--tt-text-secondary);
+  --color-tt-text-muted: var(--tt-text-muted);
+  
+  --color-tt-success-bg: var(--tt-success-bg);
+  --color-tt-warning-bg: var(--tt-warning-bg);
+
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border: var(--border);
+  
+  --color-primary-text: var(--primary-text);
+  --color-secondary-text: var(--secondary-text);
+  --color-muted-text: var(--muted-text);
+  
+  --font-sans: 'Inter', var(--font-geist-sans), sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+}
+
+body {
+  background: var(--tt-bg);
+  color: var(--tt-text);
+  font-family: var(--font-sans);
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes wave {
+  0% { height: 4px; }
+  50% { height: 16px; }
+  100% { height: 4px; }
+}
+.animate-wave {
+  animation: wave 1s ease-in-out infinite;
+}
+
+/* Base custom classes for common use */
+.tt-card {
+  @apply bg-tt-surface border border-tt-border rounded-[12px] p-6 shadow-[0_1px_3px_rgba(15,23,42,0.06)];
+}
