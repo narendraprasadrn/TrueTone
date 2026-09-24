@@ -1,0 +1,4 @@
+Model,Training Languages,Test Language,Evaluation Type,Groups,AUC,Accuracy,Precision,Recall,F1
+Exp A (Ta+Hi -> En),Tamil+Hindi,English,Group-holdout (Speaker-Independent Proxy),2,0.4316492640976417,0.48851590106007065,0.3157894736842105,0.021238938053097345,0.03980099502487562
+Exp B (Ta+En -> Hi),Tamil+English,Hindi,Group-holdout (Speaker-Independent Proxy),2,0.6245342484941869,0.49809014514896865,0.5014955134596212,0.7621212121212121,0.6049308478653037
+Exp C (En+Hi -> Ta),English+Hindi,Tamil,Exploratory cross-language evaluation — Tamil group limitation,1,0.7814857747137658,0.6505073280721533,0.7189542483660131,0.4954954954954955,0.5866666666666667

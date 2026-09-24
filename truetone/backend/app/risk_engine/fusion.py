@@ -28,31 +28,40 @@ class RiskEngine:
         # call_id -> CallState
         self.call_states: Dict[str, CallState] = {}
         
-    def _calculate_r_window(self, aasist_score: float, prosody_score: float, speaker_score: Optional[float]) -> float:
+    def _calculate_r_window(self, aasist_score: float, prosody_score: Optional[float], speaker_score: Optional[float]) -> float:
         """
         These weights are prototype starting values, not empirically optimized.
         They must be tuned against labeled validation data before any real deployment claim.
         """
-        if speaker_score is not None:
-            # Tier 1
-            w = self.config["weights"]["tier1"]
-            ecapa_mismatch = max(0.0, min(1.0, 1.0 - speaker_score)) # Assuming 1.0 is exact match
-            r_window = (w.get("aasist", 0.60) * aasist_score +
-                        w.get("prosody", 0.25) * prosody_score +
-                        w.get("speaker", 0.15) * ecapa_mismatch)
-        else:
-            # Tier 2
-            w = self.config["weights"]["tier2"]
-            r_window = (w.get("aasist", 0.75) * aasist_score +
-                        w.get("prosody", 0.25) * prosody_score)
+        tier_w = self.config["weights"]["tier1"] if speaker_score is not None else self.config["weights"]["tier2"]
+        
+        w_a = tier_w.get("aasist", 0.60 if speaker_score is not None else 0.75)
+        w_p = tier_w.get("prosody", 0.25)
+        w_s = tier_w.get("speaker", 0.15) if speaker_score is not None else 0.0
+        
+        s_a = aasist_score
+        s_p = prosody_score
+        s_s = max(0.0, min(1.0, 1.0 - speaker_score)) if speaker_score is not None else 0.0
+        
+        total_w = w_a
+        score = w_a * s_a
+        
+        if s_p is not None:
+            total_w += w_p
+            score += w_p * s_p
             
+        if speaker_score is not None:
+            total_w += w_s
+            score += w_s * s_s
+            
+        r_window = score / total_w if total_w > 0 else 0.0
         return max(0.0, min(1.0, r_window))
 
     def score_window(
         self,
         call_id: str,
         aasist_score: float,
-        prosody_score: float,
+        prosody_score: Optional[float],
         speaker_score: Optional[float] = None,
         context_flags: dict = None
     ) -> WindowRiskResult:

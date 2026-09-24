@@ -1,0 +1,38 @@
+[
+  {
+    "Model": "Exp A (Ta+Hi -> En)",
+    "Training Languages": "Tamil+Hindi",
+    "Test Language": "English",
+    "Evaluation Type": "Group-holdout (Speaker-Independent Proxy)",
+    "Groups": 2,
+    "AUC": 0.4316492640976417,
+    "Accuracy": 0.48851590106007065,
+    "Precision": 0.3157894736842105,
+    "Recall": 0.021238938053097345,
+    "F1": 0.03980099502487562
+  },
+  {
+    "Model": "Exp B (Ta+En -> Hi)",
+    "Training Languages": "Tamil+English",
+    "Test Language": "Hindi",
+    "Evaluation Type": "Group-holdout (Speaker-Independent Proxy)",
+    "Groups": 2,
+    "AUC": 0.6245342484941869,
+    "Accuracy": 0.49809014514896865,
+    "Precision": 0.5014955134596212,
+    "Recall": 0.7621212121212121,
+    "F1": 0.6049308478653037
+  },
+  {
+    "Model": "Exp C (En+Hi -> Ta)",
+    "Training Languages": "English+Hindi",
+    "Test Language": "Tamil",
+    "Evaluation Type": "Exploratory cross-language evaluation \u2014 Tamil group limitation",
+    "Groups": 1,
+    "AUC": 0.7814857747137658,
+    "Accuracy": 0.6505073280721533,
+    "Precision": 0.7189542483660131,
+    "Recall": 0.4954954954954955,
+    "F1": 0.5866666666666667
+  }
+]

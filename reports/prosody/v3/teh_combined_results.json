@@ -1,0 +1,42 @@
+{
+  "overall": {
+    "roc_auc": 0.7735443862829452,
+    "accuracy": 0.5698490972708001,
+    "precision": 0.7784734393595153,
+    "recall": 0.3994744282744283,
+    "f1": 0.41489273869807863,
+    "mode": "Group-holdout evaluation (speaker-independent proxy)."
+  },
+  "per_language": {
+    "Tamil": {
+      "roc_auc": 0.7701736725438757,
+      "accuracy": 0.6505073280721533,
+      "precision": 0.7120253164556962,
+      "recall": 0.5067567567567568,
+      "f1": 0.5921052631578947,
+      "sample_count": 887,
+      "real_count": 443,
+      "synthetic_count": 444
+    },
+    "English": {
+      "roc_auc": 0.7771284980724509,
+      "accuracy": 0.5874558303886925,
+      "precision": 0.8712121212121212,
+      "recall": 0.20353982300884957,
+      "f1": 0.3299856527977044,
+      "sample_count": 1132,
+      "real_count": 567,
+      "synthetic_count": 565
+    },
+    "Hindi": {
+      "roc_auc": 0.6460148480179296,
+      "accuracy": 0.5080213903743316,
+      "precision": 0.5078740157480315,
+      "recall": 0.7818181818181819,
+      "f1": 0.6157517899761337,
+      "sample_count": 1309,
+      "real_count": 649,
+      "synthetic_count": 660
+    }
+  }
+}

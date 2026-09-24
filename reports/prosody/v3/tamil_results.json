@@ -1,0 +1,12 @@
+{
+  "roc_auc": 0.9937218096888593,
+  "accuracy": 0.9627943883704692,
+  "precision": 0.977017074205723,
+  "recall": 0.9482635342185904,
+  "f1": 0.9621573424370824,
+  "mode": "Within-group exploratory evaluation \u2014 not speaker-independent.",
+  "sample_count": 887,
+  "real_count": 443,
+  "synthetic_count": 444,
+  "group_count": 1
+}

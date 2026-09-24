@@ -1,0 +1,7 @@
+id,split,language,is_tts,exception,short_audio
+ASM_M_INDIC_00295,test,Assamese,1,"when mode='interp', width=9 cannot exceed data.shape[axis]",True
+BEN_F_NAMES_01441,test,Bengali,1,"when mode='interp', width=9 cannot exceed data.shape[axis]",True
+BEN_M_SURPRISE_00464,train,Bengali,1,"when mode='interp', width=9 cannot exceed data.shape[axis]",True
+BRX_M_WIKI_01181,test,Bodo,1,"when mode='interp', width=9 cannot exceed data.shape[axis]",True
+NEP_F_NEWS_00633,train,Nepali,1,"when mode='interp', width=9 cannot exceed data.shape[axis]",True
+TAM_F_HAPPY_00096,train,Tamil,1,"when mode='interp', width=9 cannot exceed data.shape[axis]",True

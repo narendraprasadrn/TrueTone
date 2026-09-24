@@ -1,0 +1,34 @@
+[
+  {
+    "name": "real_whatsapp.ogg",
+    "aasist_score": 0.9941422343254089,
+    "old_prosody_score": 0.004009616901246571,
+    "new_prosody_score": 0.3805622621690967,
+    "fused_score_with_new": 0.8407472412863308,
+    "classification": "HIGH"
+  },
+  {
+    "name": "real_whatsapp_uncompressed.wav",
+    "aasist_score": 0.9666681289672852,
+    "old_prosody_score": 0.004116243565513211,
+    "new_prosody_score": 0.3805622621690967,
+    "fused_score_with_new": 0.8252930570223862,
+    "classification": "HIGH"
+  },
+  {
+    "name": "known_real",
+    "aasist_score": 0.9975194334983826,
+    "old_prosody_score": 0.003712132820329339,
+    "new_prosody_score": 0.3944788418907707,
+    "fused_score_with_new": 0.8413210076566644,
+    "classification": "HIGH"
+  },
+  {
+    "name": "known_synth",
+    "aasist_score": 0.9999392032623291,
+    "old_prosody_score": 0.003347328069054911,
+    "new_prosody_score": 0.6039737737254594,
+    "fused_score_with_new": 0.8765484273176383,
+    "classification": "HIGH"
+  }
+]

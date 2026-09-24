@@ -100,8 +100,11 @@ async def analyze_audio(
             aasist_end_idx = min(total_samples, aasist_start_idx + int(aasist_window_sec * sr))
             aasist_chunk = audio_data[aasist_start_idx:aasist_end_idx]
             aasist_processed_raw = preprocess_for_detection(aasist_chunk, sr, debug=False)
+            
+            padding_mode = re.config.get("aasist", {}).get("padding", "tile")
+            
             from app.preprocessing.pipeline import prepare_aasist_context
-            aasist_processed = prepare_aasist_context(aasist_processed_raw)
+            aasist_processed = prepare_aasist_context(aasist_processed_raw, padding_mode=padding_mode)
             
             # Save the exact model input for the first window for debugging
             if window_index == 0:

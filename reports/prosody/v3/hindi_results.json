@@ -1,0 +1,12 @@
+{
+  "roc_auc": 0.8885160671140939,
+  "accuracy": 0.8384676375404531,
+  "precision": 0.7933140336366142,
+  "recall": 0.9253750000000001,
+  "f1": 0.8542686662582244,
+  "mode": "Group-holdout evaluation (speaker-independent proxy).",
+  "sample_count": 1309,
+  "real_count": 649,
+  "synthetic_count": 660,
+  "group_count": 2
+}

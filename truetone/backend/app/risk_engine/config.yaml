@@ -15,3 +15,5 @@ hysteresis:
   deescalate_margin: 0.03
   min_consecutive_high_for_alert: 3
   cooldown_seconds: 20
+aasist:
+  padding: "tile"

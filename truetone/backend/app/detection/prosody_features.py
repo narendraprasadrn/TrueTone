@@ -66,7 +66,9 @@ def extract_prosody_features(window: np.ndarray, sr: int = 16000) -> np.ndarray:
         # --- VAD for Speaking rate proxy and pauses ---
         # We can use parselmouth's pitch array as a VAD proxy
         voiced_frames = pitch_values > 0
-        voiced_ratio = np.sum(voiced_frames) / max(1, len(voiced_frames))
+        num_voiced = np.sum(voiced_frames)
+        print(f"[PROSODY DEBUG] Num voiced frames: {num_voiced} / {len(voiced_frames)}")
+        voiced_ratio = num_voiced / max(1, len(voiced_frames))
         features.append(voiced_ratio) # speaking rate proxy
         
         # Pause count and duration

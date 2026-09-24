@@ -36,7 +36,14 @@ class ProsodyDetector:
         # Features unpacked from extract_prosody_features (length 10)
         f0_mean, f0_std, f0_range, jitter, shimmer, voiced_ratio, pause_count, pause_mean_dur, flatness, hnr = features
         
+        # Estimate number of voiced frames (assuming 10ms frame hop)
+        num_frames = len(window) / (sr * 0.01)
+        num_voiced = int(voiced_ratio * num_frames)
+        
         print(f"[ProsodyDetector] RAW FEATURES: f0_mean={f0_mean:.2f}, f0_std={f0_std:.2f}, f0_range={f0_range:.2f}, jitter={jitter:.4f}, shimmer={shimmer:.4f}, voiced_ratio={voiced_ratio:.2f}, pause_count={pause_count}, pause_mean_dur={pause_mean_dur:.2f}, flatness={flatness:.6f}, hnr={hnr:.2f}")
+        
+        if num_voiced < 20: # Less than 200ms of voiced speech
+            return None
         
         anomaly_score = 0.0
         

@@ -1,38 +1,24 @@
 import requests
-import numpy as np
-import librosa
-import soundfile as sf
-import time
+import json
 
-sr = 16000
-t = np.linspace(0, 6, sr * 6, False)
-# Synthetic: perfect pitch, no jitter, no shimmer, no noise
-synthetic = np.sin(440 * 2 * np.pi * t) * 0.5
-synthetic = synthetic.astype(np.float32)
-sf.write("synthetic.wav", synthetic, sr)
-
-# Natural: noisy, varying pitch, pauses
-# We'll use a real audio sample from librosa if available, otherwise construct one
-try:
-    natural, _ = librosa.load(librosa.ex('trumpet'), sr=16000, duration=6.0)
-except Exception:
-    natural = np.sin((440 + np.sin(t*10)*10) * 2 * np.pi * t) * 0.2 + np.random.randn(len(t))*0.05
-    natural[:16000] = 0 # pause
-    natural = natural.astype(np.float32)
-sf.write("natural.wav", natural, sr)
-
-# Test synthetic
-with open("synthetic.wav", "rb") as f:
+with open("real_whatsapp_uncompressed.wav", "rb") as f:
     res = requests.post("http://localhost:8000/test/analyze-audio", files={"file": f})
-    print("Synthetic Overall Class:", res.json().get("overall_classification"))
-    print("Synthetic Overall Score:", res.json().get("overall_score"))
-    for w in res.json().get("windows", []):
-        print("  Win", w["window_index"], "Prosody:", w["prosody_score"], "Fused:", w["fused_score"])
 
-# Test natural
-with open("natural.wav", "rb") as f:
-    res = requests.post("http://localhost:8000/test/analyze-audio", files={"file": f})
-    print("Natural Overall Class:", res.json().get("overall_classification"))
-    print("Natural Overall Score:", res.json().get("overall_score"))
-    for w in res.json().get("windows", []):
-        print("  Win", w["window_index"], "Prosody:", w["prosody_score"], "Fused:", w["fused_score"])
+if res.status_code == 200:
+    data = res.json()
+    print(f"Windows count: {len(data['windows'])}")
+    for i, w in enumerate(data['windows']):
+        print(f"W{i}: AASIST={w['aasist_score']:.2f}, Prosody={w['prosody_score']:.2f}, Fused={w['fused_score']:.2f}")
+    
+    print("\nBefore (Last Window):")
+    lw = data['windows'][-1]
+    print(f"AASIST: {lw['aasist_score']*100:.0f}%, Prosody: {lw['prosody_score']*100:.0f}%, Fused: {lw['fused_score']*100:.0f}%, Class: {data['overall_classification']}")
+    
+    print("\nAfter (Consolidated):")
+    aasist = sum(w['aasist_score'] for w in data['windows'] if w['aasist_score'] is not None) / len([w for w in data['windows'] if w['aasist_score'] is not None])
+    prosody = sum(w['prosody_score'] for w in data['windows'] if w['prosody_score'] is not None) / len([w for w in data['windows'] if w['prosody_score'] is not None])
+    fused = sum(w['fused_score'] for w in data['windows'] if w['fused_score'] is not None) / len([w for w in data['windows'] if w['fused_score'] is not None])
+    cls = "HIGH" if fused > 0.69 else "MEDIUM" if fused > 0.39 else "LOW"
+    print(f"AASIST: {aasist*100:.0f}%, Prosody: {prosody*100:.0f}%, Fused: {fused*100:.0f}%, Class: {cls}")
+else:
+    print(f"Failed: {res.text}")

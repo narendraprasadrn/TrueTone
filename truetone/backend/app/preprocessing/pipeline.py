@@ -36,21 +36,26 @@ def preprocess_for_detection(raw_audio: np.ndarray, source_sr: int, debug: bool 
         
     return audio
 
-def prepare_aasist_context(audio_buffer: np.ndarray) -> np.ndarray:
+def prepare_aasist_context(audio_buffer: np.ndarray, padding_mode: str = 'tile') -> np.ndarray:
     """
     Prepares a contiguous 64600-sample context for AASIST-L.
-    If the buffer is shorter than 64600 samples, it is zero-padded at the beginning (pre-padding).
-    If it is longer, the most recent 64600 samples are taken.
-    NEVER uses periodic repetition (np.tile).
+    If padding_mode='zero', it is zero-padded at the beginning (pre-padding).
+    If padding_mode='tile', it uses periodic repetition (np.tile).
     """
     REQUIRED_SAMPLES = 64600
     
     if len(audio_buffer) >= REQUIRED_SAMPLES:
         context = audio_buffer[-REQUIRED_SAMPLES:]
     else:
-        # Zero pad at the beginning
-        pad_width = REQUIRED_SAMPLES - len(audio_buffer)
-        context = np.pad(audio_buffer, (pad_width, 0), mode='constant', constant_values=0.0)
-        
+        if padding_mode == 'zero':
+            # Zero pad at the beginning
+            pad_width = REQUIRED_SAMPLES - len(audio_buffer)
+            context = np.pad(audio_buffer, (pad_width, 0), mode='constant', constant_values=0.0)
+        elif padding_mode == 'tile':
+            num_repeats = int(REQUIRED_SAMPLES / len(audio_buffer)) + 1
+            context = np.tile(audio_buffer, (1, num_repeats))[:, :REQUIRED_SAMPLES][0]
+        else:
+            raise ValueError(f"Unknown padding mode: {padding_mode}")
+            
     assert len(context) == REQUIRED_SAMPLES, f"Context length must be exactly {REQUIRED_SAMPLES}, got {len(context)}"
     return context
