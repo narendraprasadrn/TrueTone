@@ -105,7 +105,7 @@ export const useDashboardStore = create<DashboardStore>((set) => ({
   })
 }));
 
-export function useDashboardSocket(url: string = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:5000/ws/dashboard') {
+export function useDashboardSocket(url: string = (process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000') + '/ws/dashboard') {
   const store = useDashboardStore();
   const ws = useRef<WebSocket | null>(null);
   

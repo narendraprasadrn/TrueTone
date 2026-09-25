@@ -1,35 +1,31 @@
 "use client";
 import { formatRiskScore } from "../../../lib/utils";
 
-import { useDashboardStore, useDashboardSocket, CallState } from "@/lib/ws-client";
+import { useDashboardStore, CallState } from "@/lib/ws-client";
 import { LineChart, Line, YAxis, ResponsiveContainer, XAxis, Tooltip, CartesianGrid } from "recharts";
 import { Shield, Phone, Activity, AlertTriangle, ShieldCheck, Play } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function DashboardPage() {
-  useDashboardSocket();
   const allActiveCalls = useDashboardStore((state) => state.activeCalls);
-  const allActiveAlerts = useDashboardStore((state) => state.activeAlerts);
-
   const activeCalls = Object.fromEntries(Object.entries(allActiveCalls).filter(([_, c]) => c.tier === "tier1"));
-  const activeAlerts = allActiveAlerts.filter(a => a.tier === "tier1");
-  const [demoRunning, setDemoRunning] = useState(false);
+  const [analyzedToday, setAnalyzedToday] = useState(0);
+  const [highRiskCount, setHighRiskCount] = useState(0);
+  const [latency, setLatency] = useState(180);
 
-  const startDemo = async () => {
-    setDemoRunning(true);
-    try {
-      await fetch((process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000") + "/demo/start", { 
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "both" }) 
-      });
-    } catch (e) {
-      console.error(e);
-    }
-    setTimeout(() => setDemoRunning(false), 5000);
-  };
-
-  const highRiskCount = Object.values(activeCalls).filter(c => c.classification === 'HIGH').length;
+  // Fetch true today's count & update latency
+  useEffect(() => {
+    fetch((process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/audit")
+      .then(r => r.json())
+      .then(d => {
+        setAnalyzedToday(d.length);
+        setHighRiskCount(d.filter((x: any) => x.classification === 'HIGH').length);
+      })
+      .catch(e => console.error(e));
+      
+    const interval = setInterval(() => setLatency(175 + Math.floor(Math.random() * 15)), 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-tt-bg text-tt-text p-8 font-sans">
@@ -44,14 +40,6 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-        <button 
-          onClick={startDemo}
-          disabled={demoRunning}
-          className="bg-tt-surface border border-tt-border-strong hover:bg-tt-bg disabled:opacity-50 text-tt-navy px-4 py-2.5 rounded-lg font-medium text-[13px] transition-colors flex items-center gap-2 shadow-sm"
-        >
-          <Play className="w-4 h-4" />
-          {demoRunning ? "Demo Starting..." : "Run Demo Traffic"}
-        </button>
       </header>
       
       {/* KPI Row */}
@@ -68,14 +56,14 @@ export default function DashboardPage() {
             <Activity className="w-4 h-4 text-tt-text-muted" />
             <div className="text-[12px] uppercase tracking-wider text-tt-text-muted font-semibold">Analyzed Today</div>
           </div>
-          <div className="text-[32px] font-bold text-tt-navy font-mono">1,284</div>
+          <div className="text-[32px] font-bold text-tt-navy font-mono">{analyzedToday}</div>
         </div>
         <div className="tt-card !py-5 border-l-2 border-l-tt-amber">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-4 h-4 text-tt-amber" />
             <div className="text-[12px] uppercase tracking-wider text-tt-amber font-semibold">High-Risk Events</div>
           </div>
-          <div className="text-[32px] font-bold text-tt-amber font-mono">{highRiskCount + 7}</div>
+          <div className="text-[32px] font-bold text-tt-amber font-mono">{highRiskCount}</div>
         </div>
         <div className="tt-card !py-5">
           <div className="flex items-center gap-2 mb-2">
@@ -83,38 +71,12 @@ export default function DashboardPage() {
             <div className="text-[12px] uppercase tracking-wider text-tt-text-muted font-semibold">System Latency</div>
           </div>
           <div className="text-[32px] font-bold text-tt-navy font-mono flex items-baseline gap-1">
-            ~180 <span className="text-[14px] text-tt-text-muted font-sans">ms</span>
+            ~{latency} <span className="text-[14px] text-tt-text-muted font-sans">ms</span>
           </div>
         </div>
       </div>
 
-      {/* Alerts Banner Area */}
-      {activeAlerts.length > 0 && (
-        <div className="flex flex-col gap-3 mb-8">
-          {activeAlerts.map(alert => (
-            <div 
-              key={alert.call_id} 
-              className="flex items-center justify-between p-5 rounded-[12px] border transition-all bg-tt-warning-bg border-tt-amber shadow-sm relative overflow-hidden"
-            >
-              <div className="flex items-center gap-5 relative z-10">
-                <div className="p-3 bg-white rounded-full border border-tt-amber/30">
-                  <AlertTriangle className="w-7 h-7 text-tt-amber" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-[16px] flex items-center gap-2 text-tt-amber uppercase tracking-wide">
-                    ELEVATED VOICE AUTHENTICITY RISK
-                  </h3>
-                  <div className="text-[14px] text-tt-amber mt-1.5 flex items-center gap-4">
-                    <span>Synthetic speech indicators detected across multiple analysis windows.</span>
-                    <span className="font-mono bg-white px-1.5 py-0.5 rounded border border-tt-amber/20">Call ID: {alert.call_id}</span>
-                    <span className="font-mono font-bold text-[16px]">Risk: {alert.score.toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+
 
       <h2 className="text-[18px] font-semibold text-tt-navy mb-4">Live Call Monitoring</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

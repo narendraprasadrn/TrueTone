@@ -217,9 +217,9 @@ export default function TestBench() {
                     <BarChart data={result.windows} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--tt-border)" vertical={false} />
                       <XAxis 
-                        dataKey="start_s" 
+                        dataKey="window_index" 
                         stroke="var(--tt-text-muted)" 
-                        tickFormatter={(val) => `${val.toFixed(1)}s`} 
+                        tickFormatter={(val) => `#${val + 1}`} 
                         fontSize={12}
                         tickMargin={10}
                         axisLine={false}
@@ -229,7 +229,7 @@ export default function TestBench() {
                       <Tooltip 
                         contentStyle={{ backgroundColor: '#ffffff', borderColor: 'var(--tt-border)', borderRadius: '8px', color: 'var(--tt-navy)' }}
                         itemStyle={{ color: 'var(--tt-navy)' }}
-                        labelFormatter={(label) => `Time: ${Number(label).toFixed(1)}s`}
+                        labelFormatter={(label) => `Window #${Number(label) + 1}`}
                       />
                       <Legend iconType="circle" wrapperStyle={{ fontSize: '13px', color: 'var(--tt-text-secondary)' }} />
                       <Bar dataKey="aasist_score" name="AASIST-L" fill="var(--tt-teal)" radius={[2, 2, 0, 0]} barSize={20} />

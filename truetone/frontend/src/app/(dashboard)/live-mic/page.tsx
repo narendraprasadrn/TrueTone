@@ -37,8 +37,9 @@ export default function LiveMicTest() {
         audio: {
           channelCount: 1,
           sampleRate: 16000,
-          echoCancellation: true,
-          noiseSuppression: true
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false
         } 
       });
       streamRef.current = stream;
@@ -253,11 +254,9 @@ export default function LiveMicTest() {
           {latestResult ? (
             <>
               {/* Verdict Banner */}
-              <div className={`tt-card border flex flex-col items-center justify-center py-10 shadow-sm relative overflow-hidden transition-all duration-500 ${latestResult.classification === 'no_speech' ? 'bg-tt-surface-muted border-transparent' : getRiskBg(latestResult.classification)}`}>
+              <div className={`tt-card border flex flex-col items-center justify-center py-10 shadow-sm relative overflow-hidden transition-all duration-500 ${latestResult.classification === 'no_speech' || latestResult.classification === 'LOW' ? 'bg-tt-success-bg border-transparent' : getRiskBg(latestResult.classification)}`}>
                 
-                {latestResult.classification === 'no_speech' ? (
-                  <Mic className="w-14 h-14 text-tt-text-muted mb-4 relative z-10" />
-                ) : latestResult.classification === 'HIGH' ? (
+                {latestResult.classification === 'HIGH' ? (
                   <AlertTriangle className="w-14 h-14 text-tt-amber mb-4 relative z-10" />
                 ) : latestResult.classification === 'MEDIUM' ? (
                   <AlertTriangle className="w-14 h-14 text-tt-amber opacity-80 mb-4 relative z-10" />
@@ -269,22 +268,18 @@ export default function LiveMicTest() {
                   LIVE VOICE ANALYSIS
                 </h2>
                 
-                <h3 className={`text-[36px] font-black tracking-tight relative z-10 ${latestResult.classification === 'no_speech' ? 'text-tt-text-muted' : getRiskColor(latestResult.classification)}`}>
-                  {latestResult.classification === 'no_speech'
-                    ? 'No speech detected'
-                    : latestResult.classification === 'HIGH' 
+                <h3 className={`text-[36px] font-black tracking-tight relative z-10 ${latestResult.classification === 'no_speech' || latestResult.classification === 'LOW' ? 'text-tt-teal' : getRiskColor(latestResult.classification)}`}>
+                  {latestResult.classification === 'HIGH' 
                     ? 'HIGH RISK' 
                     : latestResult.classification === 'MEDIUM'
                       ? 'ELEVATED RISK'
-                      : 'PROTECTED'
+                      : 'LOW RISK'
                   }
                 </h3>
                 
-                {latestResult.classification !== 'no_speech' && (
-                  <p className="text-tt-text-secondary mt-4 text-[15px] relative z-10 flex items-center gap-2">
-                    Fused Risk Score: <span className="font-mono font-bold text-tt-navy bg-white border border-tt-border px-2 py-1 rounded">{formatRiskScore(latestResult.fused_score)}</span>
-                  </p>
-                )}
+                <p className="text-tt-text-secondary mt-4 text-[15px] relative z-10 flex items-center gap-2">
+                  Fused Risk Score: <span className="font-mono font-bold text-tt-navy bg-white border border-tt-border px-2 py-1 rounded">{formatRiskScore(latestResult.fused_score)}</span>
+                </p>
               </div>
 
               {/* Chart */}

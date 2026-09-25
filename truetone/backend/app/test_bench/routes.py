@@ -123,6 +123,11 @@ async def analyze_audio(
             ctx_flags = {"unknown_caller": False, "high_value_keywords": False, "ivr_allowlisted": False}
             win_res = re.score_window(call_id, a_score, p_score, s_score, ctx_flags)
             
+            # Send to Pipeline for WS broadcast and Audit logging
+            from app.pipeline import CallPipeline
+            pipeline = CallPipeline(re)
+            await pipeline.process_window(call_id, win_res, "tier1", {"aasist": "v1", "prosody": "v1"})
+            
             windows_result.append({
                 "window_index": window_index,
                 "start_s": other_start_sec,

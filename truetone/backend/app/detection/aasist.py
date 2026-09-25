@@ -72,14 +72,16 @@ class AasistDetector:
             logits = out
             assert logits.shape[-1] == 2
             
-            probabilities = F.softmax(logits, dim=1)
-            assert abs(float(probabilities.sum(dim=1).mean()) - 1.0) < 1e-4
-            
-        spoof_score = float(probabilities[0, 0].cpu().numpy())
-        bonafide_score = float(probabilities[0, 1].cpu().numpy())
-        
         logit_0 = float(logits[0, 0].cpu().numpy())
         logit_1 = float(logits[0, 1].cpu().numpy())
+        
+        # Apply the calibrated sigmoid threshold used in the Streamlit app
+        threshold = 3.8
+        scale = 1.5
+        p_real_aasist = 1.0 / (1.0 + np.exp(-(logit_1 - threshold) / scale))
+        
+        bonafide_score = p_real_aasist
+        spoof_score = 1.0 - p_real_aasist
         
         predicted_class = "bonafide" if bonafide_score > spoof_score else "spoof"
         

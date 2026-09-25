@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Shield, Database, Settings, Smartphone, Activity, Mic } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useDashboardStore } from "@/lib/ws-client";
+import { useDashboardStore, useDashboardSocket } from "@/lib/ws-client";
 
 export default function DashboardLayout({
   children,
@@ -12,6 +12,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const isConnected = useDashboardStore(state => state.isConnected);
+  useDashboardSocket();
   
   const navLinkClass = (path: string) => `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
     pathname?.startsWith(path) 
@@ -56,10 +57,6 @@ export default function DashboardLayout({
           <Link href="/live-mic" className={navLinkClass("/live-mic")}>
             <Mic className={navIconClass("/live-mic")} />
             <span className="font-medium text-[14px]">Live Mic Test</span>
-          </Link>
-          <Link href="/individual" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-tt-bg text-tt-text-secondary hover:text-tt-navy transition-colors mt-8 border border-tt-border">
-            <Smartphone className="w-5 h-5 text-tt-text-muted" />
-            <span className="font-medium text-[14px]">Tier 2 View (Demo)</span>
           </Link>
         </nav>
         

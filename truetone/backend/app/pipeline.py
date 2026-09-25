@@ -36,19 +36,30 @@ class CallPipeline:
             outcome = "alerted"
             
         # Write to audit log
-        audit_entry = AuditEntry(
-            call_id=call_id,
-            window_score=window_result.r_window,
-            call_level_score=window_result.r_final,
-            classification=window_result.classification,
-            model_versions=json.dumps(model_versions),
-            contributing_signals=json.dumps(window_result.contributing_signals),
-            outcome=outcome,
-            tier=tier
-        )
-        
         with Session(engine) as session:
-            session.add(audit_entry)
+            from sqlmodel import select
+            existing = session.exec(select(AuditEntry).where(AuditEntry.call_id == call_id)).first()
+            if existing:
+                existing.window_score = window_result.r_window
+                existing.call_level_score = window_result.r_final
+                existing.classification = window_result.classification
+                existing.contributing_signals = json.dumps(window_result.contributing_signals)
+                if outcome == "alerted":
+                    existing.outcome = "alerted"
+                existing.timestamp = datetime.now(timezone.utc)
+                session.add(existing)
+            else:
+                audit_entry = AuditEntry(
+                    call_id=call_id,
+                    window_score=window_result.r_window,
+                    call_level_score=window_result.r_final,
+                    classification=window_result.classification,
+                    model_versions=json.dumps(model_versions),
+                    contributing_signals=json.dumps(window_result.contributing_signals),
+                    outcome=outcome,
+                    tier=tier
+                )
+                session.add(audit_entry)
             session.commit()
             
         # 2. Broadcast standard window score

@@ -1,80 +1,74 @@
 import os
-from pathlib import Path
 import numpy as np
-import lightgbm as lgb
-from app.detection.prosody_features import extract_prosody_features
+import librosa
+from typing import Dict, Any
+
+PROSODY_ORDER = ["f0_mean", "f0_std_st", "f0_range_st", "voiced_frac", "jitter", "shimmer",
+                 "energy_cv", "pause_ratio", "pause_rate", "flatness", "centroid_cv", "mfcc_std"]
+
+def prosody_features(x: np.ndarray, sr: int = 16000) -> Dict[str, float]:
+    hop, frame = 256, 1024
+    f0, voiced, _ = librosa.pyin(x, fmin=librosa.note_to_hz("C2"), fmax=librosa.note_to_hz("C6"),
+                                 sr=sr, frame_length=frame, hop_length=hop)
+    rms = librosa.feature.rms(y=x, frame_length=frame, hop_length=hop)[0]
+    n = min(len(f0), len(rms))
+    f0, voiced, rms = f0[:n], voiced[:n] & ~np.isnan(f0[:n]), rms[:n]
+    idx = np.where(voiced)[0]
+    feats = dict.fromkeys(PROSODY_ORDER, 0.0)
+    feats["voiced_frac"] = float(voiced.mean()) if n else 0.0
+
+    if len(idx) >= 10:
+        f0v = f0[idx]
+        semis = 12 * np.log2(f0v / f0v.mean())
+        pair = idx[1:] - idx[:-1] == 1
+        d_f0 = np.abs(np.diff(f0v))[pair]
+        d_rms = np.abs(np.diff(rms[idx]))[pair]
+        feats.update(
+            f0_mean=float(f0v.mean()),
+            f0_std_st=float(semis.std()),
+            f0_range_st=float(np.percentile(semis, 95) - np.percentile(semis, 5)),
+            jitter=float(d_f0.mean() / f0v.mean()) if len(d_f0) else 0.0,
+            shimmer=float(d_rms.mean() / rms[idx].mean()) if len(d_rms) else 0.0,
+        )
+    feats["energy_cv"] = float(rms.std() / (rms.mean() + 1e-8))
+
+    db = 20 * np.log10(rms + 1e-8)
+    silent = db < (db.max() - 40)
+    feats["pause_ratio"] = float(silent.mean())
+    runs, run = 0, 0
+    for s in silent:
+        run = run + 1 if s else 0
+        if run == 10:
+            runs += 1
+    feats["pause_rate"] = float(runs / (len(x) / sr))
+
+    feats["flatness"] = float(librosa.feature.spectral_flatness(y=x).mean())
+    cen = librosa.feature.spectral_centroid(y=x, sr=sr)[0]
+    feats["centroid_cv"] = float(cen.std() / (cen.mean() + 1e-8))
+    feats["mfcc_std"] = float(librosa.feature.mfcc(y=x, sr=sr, n_mfcc=13).std(axis=1).mean())
+    return feats
+
+
+def _sat(v, lo, hi):
+    return float(np.clip((v - lo) / (hi - lo), 0, 1))
+
+
+def heuristic_prosody_real(f):
+    if f["voiced_frac"] < 0.1:
+        return 0.5
+    return float(np.mean([_sat(f["f0_std_st"], 0.5, 3.0), _sat(f["jitter"], 0.002, 0.02),
+                          _sat(f["shimmer"], 0.02, 0.15), _sat(f["energy_cv"], 0.3, 1.0)]))
 
 class ProsodyDetector:
     def __init__(self, model_path: str = None):
-        if model_path is None:
-            model_path = str(Path(__file__).resolve().parent / "models" / "prosody_lgbm.txt")
-        self.model_path = model_path
-        self.model = None
-        if os.path.exists(self.model_path):
-            self.model = lgb.Booster(model_file=self.model_path)
-            
-    def score(self, window: np.ndarray, sr: int = 16000) -> float:
-        """Returns behavioral-anomaly probability 0-1."""
-        features = extract_prosody_features(window, sr)
+        pass # Streamlit ignores backend lgbm model and uses heuristic logic directly for now
+
+    def score(self, window: np.ndarray, sr: int = 16000) -> Dict[str, float]:
+        """Returns behavioral-anomaly probability 0-1 as a dictionary."""
+        feats = prosody_features(window, sr)
+        prob_bonafide = heuristic_prosody_real(feats)
         
-        if self.model is not None:
-            # Reshape to (1, num_features)
-            features = features.reshape(1, -1)
-            
-            # Predict returns probability for binary classification
-            # The model was trained with 1 = bonafide, 0 = spoof.
-            # We want to return the spoof probability, so we return 1.0 - prob
-            prob_bonafide = self.model.predict(features)[0]
-            prob_bonafide = float(np.clip(prob_bonafide, 0.0, 1.0))
-            return {
-                "bonafide_score": prob_bonafide,
-                "spoof_score": 1.0 - prob_bonafide
-            }
-            
-        # PLACEHOLDER — rule-based, to be replaced by trained LightGBM once a
-        # labeled dataset (ASVspoof LA or bootstrap real+TTS set) is available.
-        # Features unpacked from extract_prosody_features (length 10)
-        f0_mean, f0_std, f0_range, jitter, shimmer, voiced_ratio, pause_count, pause_mean_dur, flatness, hnr = features
-        
-        # Estimate number of voiced frames (assuming 10ms frame hop)
-        num_frames = len(window) / (sr * 0.01)
-        num_voiced = int(voiced_ratio * num_frames)
-        
-        print(f"[ProsodyDetector] RAW FEATURES: f0_mean={f0_mean:.2f}, f0_std={f0_std:.2f}, f0_range={f0_range:.2f}, jitter={jitter:.4f}, shimmer={shimmer:.4f}, voiced_ratio={voiced_ratio:.2f}, pause_count={pause_count}, pause_mean_dur={pause_mean_dur:.2f}, flatness={flatness:.6f}, hnr={hnr:.2f}")
-        
-        if num_voiced < 20: # Less than 200ms of voiced speech
-            return None
-        
-        anomaly_score = 0.0
-        
-        # 1. Pitch variation (TTS often lacks dynamic pitch contour)
-        if f0_std < 20.0:
-            anomaly_score += 0.3 * (20.0 - f0_std) / 20.0
-            
-        # 2. Jitter and Shimmer (TTS can be too "perfect")
-        if jitter < 0.01:
-            anomaly_score += 0.2 * (0.01 - jitter) / 0.01
-        elif jitter > 0.04:
-            anomaly_score += 0.2 * min(1.0, (jitter - 0.04) / 0.04)
-            
-        if shimmer < 0.05:
-            anomaly_score += 0.2 * (0.05 - shimmer) / 0.05
-        elif shimmer > 0.12:
-            anomaly_score += 0.2 * min(1.0, (shimmer - 0.12) / 0.12)
-            
-        # 3. Speaking rate / Voiced ratio (TTS might lack natural pauses)
-        if voiced_ratio > 0.80:
-            anomaly_score += 0.2 * min(1.0, (voiced_ratio - 0.80) / 0.20)
-            
-        # 4. Harmonic-to-Noise Ratio (TTS can be excessively harmonic)
-        if hnr > 20.0:
-            anomaly_score += 0.2 * min(1.0, (hnr - 20.0) / 10.0)
-            
-        # 5. Spectral flatness (TTS often lacks natural high-frequency breath noise)
-        if flatness < 0.001:
-            anomaly_score += 0.1 * (0.001 - flatness) / 0.001
-            
         return {
-            "bonafide_score": 1.0 - min(1.0, float(anomaly_score)),
-            "spoof_score": min(1.0, float(anomaly_score))
+            "bonafide_score": prob_bonafide,
+            "spoof_score": 1.0 - prob_bonafide
         }
