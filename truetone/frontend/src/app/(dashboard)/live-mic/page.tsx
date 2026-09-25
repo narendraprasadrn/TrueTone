@@ -12,7 +12,7 @@ type WSResult = {
   prosody_score: number;
   speaker_score: number | null;
   fused_score: number;
-  classification: "LOW" | "MEDIUM" | "HIGH";
+  classification: "LOW" | "MEDIUM" | "HIGH" | "no_speech";
 };
 
 export default function LiveMicTest() {
@@ -83,7 +83,7 @@ export default function LiveMicTest() {
                   prosody_score: 0,
                   speaker_score: null,
                   fused_score: 0,
-                  classification: "no_speech"
+                  classification: "no_speech" as const
                 }];
                 if (next.length > 20) return next.slice(next.length - 20);
                 return next;
