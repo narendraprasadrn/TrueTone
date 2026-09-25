@@ -1,7 +1,7 @@
 "use client";
 import { formatRiskScore, aggregateWindowScores } from "../../../lib/utils";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Upload, Activity, ShieldCheck, AlertTriangle, FileAudio, Settings } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
@@ -27,9 +27,22 @@ type AnalysisResult = {
 export default function TestBench() {
   const [file, setFile] = useState<File | null>(null);
   const [enrolledId, setEnrolledId] = useState("");
+  const [apiUrl, setApiUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const savedUrl = localStorage.getItem("tt_api_url");
+    if (savedUrl) {
+      setApiUrl(savedUrl);
+    }
+  }, []);
+
+  const handleApiUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setApiUrl(e.target.value);
+    localStorage.setItem("tt_api_url", e.target.value);
+  };
 
   const handleUpload = async () => {
     if (!file) return;
@@ -42,7 +55,7 @@ export default function TestBench() {
     if (enrolledId) formData.append("enrolled_identity_id", enrolledId);
 
     try {
-      const url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const url = apiUrl || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
       const res = await fetch(`${url}/test/analyze-audio`, {
         method: "POST",
         body: formData
@@ -139,6 +152,17 @@ export default function TestBench() {
               value={enrolledId}
               onChange={e => setEnrolledId(e.target.value)}
               placeholder="Optional"
+              className="w-full bg-white border border-tt-border-strong rounded px-3 py-2.5 text-[14px] outline-none focus:border-tt-teal text-tt-navy"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[13px] font-semibold text-tt-text-secondary uppercase mb-1">Backend API URL (For testing)</label>
+            <input 
+              type="text"
+              value={apiUrl}
+              onChange={handleApiUrlChange}
+              placeholder="https://...ngrok-free.app"
               className="w-full bg-white border border-tt-border-strong rounded px-3 py-2.5 text-[14px] outline-none focus:border-tt-teal text-tt-navy"
             />
           </div>

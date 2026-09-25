@@ -20,12 +20,25 @@ export default function LiveMicTest() {
   const [results, setResults] = useState<WSResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [duration, setDuration] = useState(0);
+  const [wsUrlState, setWsUrlState] = useState("");
   
   const wsRef = useRef<WebSocket | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const savedUrl = localStorage.getItem("tt_ws_url");
+    if (savedUrl) {
+      setWsUrlState(savedUrl);
+    }
+  }, []);
+
+  const handleWsUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setWsUrlState(e.target.value);
+    localStorage.setItem("tt_ws_url", e.target.value);
+  };
 
   const startRecording = async () => {
     setError(null);
@@ -44,7 +57,7 @@ export default function LiveMicTest() {
       });
       streamRef.current = stream;
 
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:5000";
+      const wsUrl = wsUrlState || process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:5000";
       const ws = new WebSocket(`${wsUrl}/ws/live-mic`);
       wsRef.current = ws;
 
@@ -179,6 +192,18 @@ export default function LiveMicTest() {
               <Radio className="w-4 h-4 text-tt-teal" />
               Capture Device
             </h2>
+
+            <div className="mb-4">
+              <label className="block text-[13px] font-semibold text-tt-text-secondary uppercase mb-1">Backend WS URL (For testing)</label>
+              <input 
+                type="text"
+                value={wsUrlState}
+                onChange={handleWsUrlChange}
+                placeholder="wss://...ngrok-free.app"
+                disabled={isRecording}
+                className="w-full bg-white border border-tt-border-strong rounded px-3 py-2.5 text-[14px] outline-none focus:border-tt-teal text-tt-navy disabled:opacity-50"
+              />
+            </div>
             
             <div className="flex flex-col items-center">
               {!isRecording ? (
